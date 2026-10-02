@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: meishi
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /healthz
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: meishi-db
+          property: connectionString
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: APP_USER
+        sync: false
+      - key: APP_PASSWORD
+        sync: false
+      - key: ANTHROPIC_MODEL
+        value: claude-sonnet-5-5
+
+databases:
+  - name: meishi-db
+    plan: free
+    databaseName: meishi
