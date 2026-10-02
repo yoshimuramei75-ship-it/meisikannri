@@ -8,8 +8,8 @@ import { fileURLToPath } from "node:url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT || 3000;
 const MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-5-5";
-const FIELDS = ["company", "department", "title", "name", "name_kana", "phone", "mobile", "fax", "email", "address", "url", "memo"];
-const OCR_FIELDS = FIELDS.filter((f) => f !== "memo");
+const FIELDS = ["company", "department", "title", "name", "name_kana", "phone", "mobile", "fax", "email", "address", "url", "met_place", "memo"];
+const OCR_FIELDS = FIELDS.filter((f) => f !== "memo" && f !== "met_place");
 
 if (!process.env.DATABASE_URL) {
   console.error("DATABASE_URL が設定されていません");
@@ -43,6 +43,9 @@ async function migrate() {
       created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
       updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
     )`);
+  // v2: 会った場所・タグ
+  await pool.query(`ALTER TABLE cards ADD COLUMN IF NOT EXISTS met_place TEXT NOT NULL DEFAULT ''`);
+  await pool.query(`ALTER TABLE cards ADD COLUMN IF NOT EXISTS tags TEXT[] NOT NULL DEFAULT '{}'`);
 }
 
 const app = express();
@@ -83,7 +86,16 @@ function pickFields(src) {
   for (const f of FIELDS) out[f] = typeof src?.[f] === "string" ? src[f].trim().slice(0, 2000) : "";
   return out;
 }
-const LIST_COLS = `id, ${FIELDS.join(", ")}, (image IS NOT NULL) AS has_image, created_at, updated_at`;
+function pickTags(src) {
+  if (!Array.isArray(src?.tags)) return [];
+  const seen = new Set();
+  for (const t of src.tags) {
+    const v = String(t).trim().replace(/^#/, "").slice(0, 40);
+    if (v) seen.add(v);
+  }
+  return [...seen].slice(0, 20);
+}
+const LIST_COLS = `id, ${FIELDS.join(", ")}, tags, (image IS NOT NULL) AS has_image, created_at, updated_at`;
 
 // ---- 一覧 ----
 app.get("/api/cards", async (_req, res, next) => {
@@ -112,8 +124,8 @@ app.post("/api/cards", upload.single("image"), async (req, res, next) => {
     const f = pickFields(data);
     if (!f.name && !f.company) return res.status(400).json({ error: "会社名か氏名のどちらかを入力してください" });
     const id = crypto.randomUUID();
-    const cols = ["id", ...FIELDS, "image", "image_type"];
-    const vals = [id, ...FIELDS.map((k) => f[k]), req.file?.buffer || null, req.file?.mimetype || null];
+    const cols = ["id", ...FIELDS, "tags", "image", "image_type"];
+    const vals = [id, ...FIELDS.map((k) => f[k]), pickTags(data), req.file?.buffer || null, req.file?.mimetype || null];
     const ph = cols.map((_, i) => `$${i + 1}`).join(", ");
     const { rows } = await pool.query(`INSERT INTO cards (${cols.join(", ")}) VALUES (${ph}) RETURNING ${LIST_COLS}`, vals);
     res.status(201).json(rows[0]);
@@ -126,9 +138,10 @@ app.put("/api/cards/:id", async (req, res, next) => {
     const f = pickFields(req.body);
     if (!f.name && !f.company) return res.status(400).json({ error: "会社名か氏名のどちらかを入力してください" });
     const sets = FIELDS.map((k, i) => `${k} = $${i + 2}`).join(", ");
+    const tagParam = FIELDS.length + 2;
     const { rows } = await pool.query(
-      `UPDATE cards SET ${sets}, updated_at = now() WHERE id = $1 RETURNING ${LIST_COLS}`,
-      [req.params.id, ...FIELDS.map((k) => f[k])]
+      `UPDATE cards SET ${sets}, tags = $${tagParam}, updated_at = now() WHERE id = $1 RETURNING ${LIST_COLS}`,
+      [req.params.id, ...FIELDS.map((k) => f[k]), pickTags(req.body)]
     );
     if (!rows[0]) return res.status(404).json({ error: "見つかりません" });
     res.json(rows[0]);
