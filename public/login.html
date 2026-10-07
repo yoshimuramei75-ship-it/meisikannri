@@ -85,12 +85,9 @@ label.field span{display:block;font-size:13px;color:var(--sub);margin-bottom:5px
       <button type="button" role="tab" id="tabReg" aria-selected="false">新規登録</button>
     </div>
     <div class="first" id="firstNote" hidden>まだ誰も登録していません。最初に登録した人が<strong>管理者</strong>になり、メンバーの利用停止などができます。</div>
-    <label class="field" data-reg hidden><span>名前（一覧に「登録者」として表示されます）</span>
-      <div class="inputwrap"><input id="name" name="name" autocomplete="name" maxlength="40"></div>
-    </label>
-    <label class="field"><span>ID</span>
-      <div class="inputwrap"><input id="user" name="username" autocomplete="username" autocapitalize="off" spellcheck="false" required></div>
-      <div class="hint" data-reg hidden>半角英数字で3文字以上（例：yamada）。ログインのときに使います。</div>
+    <label class="field"><span>名前</span>
+      <div class="inputwrap"><input id="name" name="username" autocomplete="username" maxlength="40" required></div>
+      <div class="hint" data-reg hidden>ログインに使います。名刺の「登録者」にも表示されます。同じ名字の人がいる場合はフルネームで（例：佐藤 健一）。</div>
     </label>
     <label class="field"><span>パスワード</span>
       <div class="inputwrap">
@@ -106,7 +103,7 @@ label.field span{display:block;font-size:13px;color:var(--sub);margin-bottom:5px
     </label>
     <label class="remember">
       <input type="checkbox" id="remember" checked>
-      <span>ログインしたままにする<small>30日間、この端末ではIDとパスワードの入力が不要になります</small></span>
+      <span>ログインしたままにする<small>30日間、この端末では名前とパスワードの入力が不要になります</small></span>
     </label>
     <button class="submit" id="submit" type="submit">ログイン</button>
     <p class="error" id="error" role="alert"></p>
@@ -119,7 +116,7 @@ label.field span{display:block;font-size:13px;color:var(--sub);margin-bottom:5px
   let mode = "login", inviteRequired = false;
 
   try {
-    const u = localStorage.getItem("meishi.lastUser"); if (u) $("user").value = u;
+    const u = localStorage.getItem("meishi.lastUser"); if (u) $("name").value = u;
     const r = localStorage.getItem("meishi.remember"); if (r !== null) $("remember").checked = r === "1";
   } catch(e) {}
 
@@ -133,8 +130,9 @@ label.field span{display:block;font-size:13px;color:var(--sub);margin-bottom:5px
     $("password").autocomplete = reg ? "new-password" : "current-password";
     $("submit").textContent = reg ? "登録してはじめる" : "ログイン";
     $("error").textContent = "";
-    if (reg){ $("user").value = ""; $("password").value = ""; $("name").focus(); }
-    else ($("user").value ? $("password") : $("user")).focus();
+    $("password").value = "";
+    if (reg){ $("name").value = ""; $("name").focus(); }
+    else { try { $("name").value = localStorage.getItem("meishi.lastUser") || ""; } catch(e) {} ($("name").value ? $("password") : $("name")).focus(); }
   }
   $("tabLogin").onclick = () => setMode("login");
   $("tabReg").onclick = () => setMode("register");
@@ -154,24 +152,22 @@ label.field span{display:block;font-size:13px;color:var(--sub);margin-bottom:5px
 
   $("form").addEventListener("submit", async e => {
     e.preventDefault();
-    const login_id = $("user").value.trim(), password = $("password").value, remember = $("remember").checked;
+    const name = $("name").value.trim(), password = $("password").value, remember = $("remember").checked;
     const reg = mode === "register";
     const err = msg => { $("error").textContent = msg; };
-    if (reg && !$("name").value.trim()) return err("名前を入力してください。");
-    if (!login_id || !password) return err("IDとパスワードを入力してください。");
-    if (reg && !/^[A-Za-z0-9._@-]{3,40}$/.test(login_id)) return err("IDは半角英数字で3文字以上にしてください。");
+    if (!name || !password) return err("名前とパスワードを入力してください。");
     if (reg && password.length < 8) return err("パスワードは8文字以上にしてください。");
     if (reg && inviteRequired && !$("invite").value.trim()) return err("合言葉を入力してください。");
 
     $("submit").disabled = true; $("submit").textContent = reg ? "登録しています…" : "確認しています…"; err("");
     try {
       const body = reg
-        ? { name: $("name").value.trim(), login_id, password, invite: $("invite").value, remember }
-        : { login_id, password, remember };
+        ? { name, password, invite: $("invite").value, remember }
+        : { name, password, remember };
       const r = await fetch(reg ? "/api/register" : "/api/login", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body) });
       const data = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(data.error || "うまくいきませんでした。");
-      try { localStorage.setItem("meishi.lastUser", login_id); localStorage.setItem("meishi.remember", remember ? "1" : "0"); } catch(e) {}
+      try { localStorage.setItem("meishi.lastUser", name); localStorage.setItem("meishi.remember", remember ? "1" : "0"); } catch(e) {}
       location.replace("/");
     } catch(ex) {
       err(ex.message === "Failed to fetch" ? "通信できませんでした。電波の良い場所でもう一度お試しください。" : ex.message);
