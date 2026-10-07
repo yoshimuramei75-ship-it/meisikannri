@@ -149,6 +149,9 @@ img{max-width:100%}
 .reading .scan{display:block;animation:scan 1.6s ease-in-out infinite alternate}
 @keyframes scan{from{top:4%}to{top:94%}}
 @media (prefers-reduced-motion:reduce){.reading .scan{animation:none;top:50%}}
+.photo.none{background:var(--ivory2);border:1.5px dashed var(--line);color:var(--sub);font-size:14px;min-height:96px}
+.photoacts{display:flex;gap:8px;margin:10px 16px 0;flex-wrap:wrap}
+.photoacts button{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--white);color:var(--walnut);border-radius:999px;padding:7px 14px;font-size:14px;font-weight:600}
 .status{margin:10px 22px 0;font-size:14px;color:var(--sub);min-height:1.2em}
 .status.err{color:var(--danger)}
 .reread{margin:8px 16px 0;border:none;background:none;color:var(--walnut);font-weight:600;padding:4px 6px}
@@ -245,6 +248,10 @@ img{max-width:100%}
       <button class="navbtn strong" id="saveBtn">保存</button>
     </div>
     <div id="ePhotoWrap"></div>
+    <div class="photoacts">
+      <button type="button" id="ePhotoCam"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg><span id="ePhotoCamLabel">撮り直す</span></button>
+      <button type="button" id="ePhotoPick"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-9 9"/></svg><span id="ePhotoPickLabel">別の写真を選ぶ</span></button>
+    </div>
     <div class="status" id="status" aria-live="polite"></div>
     <button class="reread" id="rereadBtn" hidden>もう一度読み取る</button>
 
@@ -299,6 +306,7 @@ img{max-width:100%}
   let current = null;   // 詳細画面のカード
   let editing = null;   // {id|null, imageBlob|null, localUrl|null, hasImage}
   let ocrCtl = null, saving = false;
+  let pickFor = "new";  // 写真の選択先："new"＝新しい名刺、"editor"＝編集中の名刺の写真を差し替え
 
   try { view = localStorage.getItem("meishi.view") === "card" ? "card" : "list"; } catch(e) {}
 
@@ -522,25 +530,51 @@ img{max-width:100%}
   // ---------- 編集 ----------
   function openEditor(card, blob){
     const localUrl = blob ? URL.createObjectURL(blob) : null;
-    editing = { id: card ? card.id : null, imageBlob: blob||null, localUrl, hasImage: !!(card && card.has_image) };
+    editing = { id: card ? card.id : null, imageBlob: blob||null, localUrl, hasImage: !!(card && card.has_image), photoChanged: false };
     $("eTitle").textContent = card ? "名刺を編集" : "新しい名刺";
     for (const f of FIELDS) $("f_"+f).value = (card && card[f]) || "";
     $("f_tags").value = card && card.tags ? card.tags.join(" ") : "";
     renderTagSuggest();
-    const wrap=$("ePhotoWrap"); wrap.textContent="";
-    const src = localUrl || (card && card.has_image ? imgUrl(card) : null);
-    if (src){
-      const p=el("div","photo"); p.id="photoBox";
-      const img=el("img"); img.alt="名刺の写真"; img.src=src; p.append(img, el("div","scan"));
-      wrap.append(p);
-    }
+    renderEditorPhoto(localUrl || (card && card.has_image ? imgUrl(card) : null));
     $("rereadBtn").hidden = !blob;
+    $("rereadBtn").textContent = "もう一度読み取る";
     $("deleteBtn").hidden = !card;
     setStatus("");
     push($("editor"));
     if (blob) runOcr();
     else if (!card) setTimeout(()=>$("f_name").focus(),300);
   }
+  function renderEditorPhoto(src){
+    const wrap=$("ePhotoWrap"); wrap.textContent="";
+    if (src){
+      const p=el("div","photo"); p.id="photoBox";
+      const img=el("img"); img.alt="名刺の写真"; img.src=src; p.append(img, el("div","scan"));
+      wrap.append(p);
+    } else {
+      wrap.append(el("div","photo none","名刺の写真はまだありません"));
+    }
+    $("ePhotoCamLabel").textContent = src ? "撮り直す" : "撮影して追加";
+    $("ePhotoPickLabel").textContent = src ? "別の写真を選ぶ" : "写真から追加";
+  }
+  // 編集中の名刺の写真を差し替える（保存を押すまでサーバーには送らない）
+  function setEditorPhoto(blob){
+    if (!editing) return;
+    if (ocrCtl){ ocrCtl.abort(); ocrCtl=null; }
+    if (editing.localUrl) URL.revokeObjectURL(editing.localUrl);
+    editing.imageBlob=blob; editing.localUrl=URL.createObjectURL(blob); editing.photoChanged=true;
+    renderEditorPhoto(editing.localUrl);
+    $("rereadBtn").hidden=false;
+    $("rereadBtn").disabled=false;
+    if (editing.id){
+      $("rereadBtn").textContent="この写真から読み取り直す";
+      setStatus("写真を差し替えました。「保存」を押すと反映されます。");
+    } else {
+      runOcr();
+    }
+  }
+  $("ePhotoCam").onclick=()=>{ pickFor="editor"; $("camInput").click(); };
+  $("ePhotoPick").onclick=()=>{ pickFor="editor"; $("fileInput").click(); };
+
   function cleanupEditor(){
     if (ocrCtl){ ocrCtl.abort(); ocrCtl=null; }
     if (editing && editing.localUrl) URL.revokeObjectURL(editing.localUrl);
@@ -585,7 +619,10 @@ img{max-width:100%}
       if (editing===target){ box && box.classList.remove("reading"); $("rereadBtn").disabled=false; }
     }
   }
-  $("rereadBtn").onclick=()=>{ for (const f of OCR_FIELDS) $("f_"+f).value=""; runOcr(); };
+  $("rereadBtn").onclick=()=>{
+    if (editing && editing.id && !confirm("会社名・氏名・連絡先などを、この写真から読み取った内容で入れ直しますか？\n（会った場所・タグ・メモはそのまま残ります）")) return;
+    for (const f of OCR_FIELDS) $("f_"+f).value=""; runOcr();
+  };
 
   async function save(){
     if (saving || !editing) return;
@@ -596,7 +633,11 @@ img{max-width:100%}
     const target=editing;
     try {
       if (target.id){
-        const row=await api("/api/cards/"+target.id,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(data)});
+        let row=await api("/api/cards/"+target.id,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(data)});
+        if (target.photoChanged && target.imageBlob){
+          const fd=new FormData(); fd.append("image",target.imageBlob,"card.jpg");
+          row=await api("/api/cards/"+target.id+"/image",{method:"PUT",body:fd});
+        }
         cards=cards.map(c=>c.id===row.id?row:c);
         current=row; renderDetail();
         toast("変更を保存しました");
@@ -638,16 +679,21 @@ img{max-width:100%}
   fab.addEventListener("click",()=>{
     if (longPressed){ longPressed=false; return; }
     if (menu.classList.contains("open")){ closeMenu(); return; }
-    $("camInput").click();
+    pickFor="new"; $("camInput").click();
   });
   document.addEventListener("pointerdown",e=>{ if(!e.target.closest(".fab-wrap")) closeMenu(); });
-  $("mCam").onclick=()=>{ closeMenu(); $("camInput").click(); };
-  $("mPick").onclick=()=>{ closeMenu(); $("fileInput").click(); };
+  $("mCam").onclick=()=>{ closeMenu(); pickFor="new"; $("camInput").click(); };
+  $("mPick").onclick=()=>{ closeMenu(); pickFor="new"; $("fileInput").click(); };
   $("mManual").onclick=()=>{ closeMenu(); openEditor(null,null); };
   for (const id of ["camInput","fileInput"]){
     $(id).onchange=async e=>{
       const f=e.target.files&&e.target.files[0]; e.target.value=""; if(!f) return;
-      try { openEditor(null, await shrink(f)); }
+      const target=pickFor; pickFor="new";
+      try {
+        const blob=await shrink(f);
+        if (target==="editor" && editing) setEditorPhoto(blob);
+        else openEditor(null, blob);
+      }
       catch(err){ toast("この画像は読み込めません。JPEGかPNGの写真を選んでください。"); }
     };
   }
