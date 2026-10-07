@@ -148,6 +148,19 @@ app.put("/api/cards/:id", async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+// ---- 写真の差し替え（multipart: image）----
+app.put("/api/cards/:id/image", upload.single("image"), async (req, res, next) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: "画像がありません（JPEG・PNG・WebP・GIF）" });
+    const { rows } = await pool.query(
+      `UPDATE cards SET image = $2, image_type = $3, updated_at = now() WHERE id = $1 RETURNING ${LIST_COLS}`,
+      [req.params.id, req.file.buffer, req.file.mimetype]
+    );
+    if (!rows[0]) return res.status(404).json({ error: "見つかりません" });
+    res.json(rows[0]);
+  } catch (e) { next(e); }
+});
+
 // ---- 削除 ----
 app.delete("/api/cards/:id", async (req, res, next) => {
   try {
