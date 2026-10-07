@@ -315,10 +315,9 @@ img{max-width:100%}
       <span class="t" id="accTitle">アカウント</span>
       <span style="width:70px"></span>
     </div>
-    <div class="group-title">名前（登録者として表示されます）</div>
+    <div class="group-title">名前（ログインと「登録者」の表示に使います）</div>
     <div class="group">
       <div class="f"><label for="accName">名前</label><input id="accName" maxlength="40" autocomplete="name"></div>
-      <div class="f"><label>ID</label><span id="accId" style="color:var(--sub)"></span></div>
       <div class="acc-msg" id="nameMsg"></div>
       <div class="btnrow"><button class="solid" id="saveName">名前を保存</button></div>
     </div>
@@ -784,14 +783,14 @@ img{max-width:100%}
   function accMsg(id,msg,err){ const m=$(id); m.textContent=msg||""; m.classList.toggle("err",!!err); }
   $("meBtn").onclick=()=>{
     if(!me) return;
-    $("accName").value=me.name; $("accId").textContent=me.login_id;
+    $("accName").value=me.name;
     $("pwCur").value=""; $("pwNew").value=""; accMsg("nameMsg",""); accMsg("pwMsg","");
     $("membersWrap").hidden=!me.is_admin;
     if (me.is_admin) loadMembers();
     push($("account"));
   };
   $("saveName").onclick=async()=>{
-    try { me=await api("/api/me",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:$("accName").value})}); showMe(); accMsg("nameMsg","保存しました。これから登録する名刺に、この名前が表示されます。"); }
+    try { me=await api("/api/me",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:$("accName").value})}); showMe(); try{localStorage.setItem("meishi.lastUser",me.name);}catch(e){} accMsg("nameMsg","保存しました。次からはこの名前でログインしてください。"); }
     catch(e){ accMsg("nameMsg",e.message,true); }
   };
   $("savePw").onclick=async()=>{
@@ -809,7 +808,7 @@ img{max-width:100%}
       const row=el("div","acc-row"), who=el("div","who"), b=el("b",null,u.name);
       if (u.is_admin) b.append(el("span","badge admin","管理者"));
       if (u.disabled) b.append(el("span","badge off","利用停止中"));
-      who.append(b, el("small",null,"ID: "+u.login_id+"　登録した名刺 "+u.card_count+"枚"));
+      who.append(b, el("small",null,"登録した名刺 "+u.card_count+"枚"));
       row.append(who);
       if (u.id!==me.id){
         const acts=el("div","acc-actions");
