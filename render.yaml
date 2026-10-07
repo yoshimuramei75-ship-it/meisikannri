@@ -11,14 +11,14 @@ services:
         fromDatabase:
           name: meishi-db
           property: connectionString
-      - key: ANTHROPIC_API_KEY
+      - key: GEMINI_API_KEY
         sync: false
       - key: APP_USER
         sync: false
       - key: APP_PASSWORD
         sync: false
-      - key: ANTHROPIC_MODEL
-        value: claude-sonnet-5-5
+      - key: GEMINI_MODEL
+        value: gemini-2.5-flash
 
 databases:
   - name: meishi-db

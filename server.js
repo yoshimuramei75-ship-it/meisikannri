@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT || 3000;
-const MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-5-5";
+const MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 const FIELDS = ["company", "department", "title", "name", "name_kana", "phone", "mobile", "fax", "email", "address", "url", "met_place", "memo"];
 const OCR_FIELDS = FIELDS.filter((f) => f !== "memo" && f !== "met_place");
 
@@ -156,7 +156,7 @@ app.delete("/api/cards/:id", async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-// ---- 名刺の読み取り（Claude API）----
+// ---- 名刺の読み取り（Gemini API）----
 const OCR_PROMPT = `添付画像は名刺の写真です。印刷されている内容を正確に読み取り、次のキーを持つJSONオブジェクトだけを返してください。前置きやコードブロックは不要です。
 {"company":"","department":"","title":"","name":"","name_kana":"","phone":"","mobile":"","fax":"","email":"","address":"","url":""}
 ルール:
@@ -172,36 +172,39 @@ const OCR_PROMPT = `添付画像は名刺の写真です。印刷されている
 
 app.post("/api/ocr", upload.single("image"), async (req, res, next) => {
   try {
-    if (!process.env.ANTHROPIC_API_KEY) return res.status(503).json({ error: "ANTHROPIC_API_KEY が設定されていません" });
+    if (!process.env.GEMINI_API_KEY) return res.status(503).json({ error: "GEMINI_API_KEY が設定されていません" });
     if (!req.file) return res.status(400).json({ error: "画像がありません（JPEG・PNG・WebP・GIF）" });
 
-    const r = await fetch("https://api.anthropic.com/v1/messages", {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(MODEL)}:generateContent`;
+    const r = await fetch(url, {
       method: "POST",
       headers: {
         "content-type": "application/json",
-        "x-api-key": process.env.ANTHROPIC_API_KEY,
-        "anthropic-version": "2023-06-01",
+        "x-goog-api-key": process.env.GEMINI_API_KEY,
       },
       body: JSON.stringify({
-        model: MODEL,
-        max_tokens: 1024,
-        messages: [{
+        contents: [{
           role: "user",
-          content: [
-            { type: "image", source: { type: "base64", media_type: req.file.mimetype, data: req.file.buffer.toString("base64") } },
-            { type: "text", text: OCR_PROMPT },
+          parts: [
+            { inline_data: { mime_type: req.file.mimetype, data: req.file.buffer.toString("base64") } },
+            { text: OCR_PROMPT },
           ],
         }],
+        generationConfig: {
+          responseMimeType: "application/json", // JSONだけを返させる
+          temperature: 0,
+          maxOutputTokens: 4096,                // 思考トークンも含むため余裕を持たせる
+        },
       }),
     });
     if (!r.ok) {
       const detail = await r.text();
-      console.error("Claude API error", r.status, detail);
+      console.error("Gemini API error", r.status, detail);
       const msg = r.status === 429 ? "読み取りの回数が上限に達しました。少し待ってから再試行してください。" : "読み取りに失敗しました。";
       return res.status(502).json({ error: msg });
     }
     const body = await r.json();
-    const text = (body.content || []).filter((c) => c.type === "text").map((c) => c.text).join("");
+    const text = (body.candidates?.[0]?.content?.parts || []).map((p) => p.text || "").join("");
     const m = text.match(/\{[\s\S]*\}/);
     let parsed = {};
     try { parsed = m ? JSON.parse(m[0]) : {}; } catch { parsed = {}; }
