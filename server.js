@@ -77,6 +77,10 @@ async function migrate() {
       PRIMARY KEY (user_id, card_id)
     )`);
   await pool.query(`CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)`);
+  // v5: IDをやめて名前でログイン。以前IDで登録した人も名前でログインできるようにそろえる
+  try {
+    await pool.query(`UPDATE users SET login_id = lower(regexp_replace(normalize(display_name, NFKC), '\\s', '', 'g'))`);
+  } catch (e) { console.error("名前ログインへの移行で重複がありました。管理者が名前を変えてください:", e.detail || e.message); }
 
   // 署名鍵：環境変数 SESSION_SECRET があればそれを、無ければ初回起動時に作ってDBに保存
   if (process.env.SESSION_SECRET) {
@@ -206,7 +210,10 @@ app.get("/api/auth-config", async (_req, res, next) => {
   } catch (e) { next(e); }
 });
 
-const LOGIN_ID_RE = /^[A-Za-z0-9._@-]{3,40}$/;
+// 名前でログインする。全角・半角やスペースの有無の違いは同じ名前として扱う
+function cleanName(s) { return String(s || "").normalize("NFKC").trim().replace(/\s+/g, " ").slice(0, 40); }
+function nameKey(s) { return cleanName(s).replace(/\s/g, "").toLowerCase(); }
+const NAME_TAKEN = "その名前はすでに登録されています。同じ名字の人がいる場合は、フルネームで登録してください。";
 function checkNewPassword(pw) {
   if (typeof pw !== "string" || pw.length < 8) return "パスワードは8文字以上にしてください。";
   if (pw.length > 200) return "パスワードが長すぎます。";
@@ -216,15 +223,14 @@ function checkNewPassword(pw) {
 app.post("/api/register", async (req, res, next) => {
   try {
     if (isLocked(req.ip)) return res.status(429).json({ error: "しばらく待ってからお試しください。" });
-    const { name = "", login_id = "", password = "", invite = "", remember = true } = req.body || {};
+    const { name = "", password = "", invite = "", remember = true } = req.body || {};
     if (INVITE_CODE && !safeEqual(String(invite).trim(), INVITE_CODE)) {
       recordFail(req.ip);
       return res.status(403).json({ error: "合言葉が違います。" });
     }
-    const displayName = String(name).trim().slice(0, 40);
-    const loginId = String(login_id).trim();
-    if (!displayName) return res.status(400).json({ error: "名前を入力してください。" });
-    if (!LOGIN_ID_RE.test(loginId)) return res.status(400).json({ error: "IDは半角英数字（記号は . _ - @）で3文字以上にしてください。" });
+    const displayName = cleanName(name);
+    const loginId = nameKey(name);
+    if (!loginId) return res.status(400).json({ error: "名前を入力してください。" });
     const pwErr = checkNewPassword(password);
     if (pwErr) return res.status(400).json({ error: pwErr });
 
@@ -244,7 +250,7 @@ app.post("/api/register", async (req, res, next) => {
       user = rows[0];
     } catch (e) {
       await client.query("ROLLBACK").catch(() => {});
-      if (e.code === "23505") return res.status(409).json({ error: "そのIDはすでに使われています。別のIDにしてください。" });
+      if (e.code === "23505") return res.status(409).json({ error: NAME_TAKEN });
       throw e;
     } finally { client.release(); }
     setSession(req, res, user, !!remember);
@@ -255,17 +261,17 @@ app.post("/api/register", async (req, res, next) => {
 app.post("/api/login", async (req, res, next) => {
   try {
     if (isLocked(req.ip)) return res.status(429).json({ error: "ログインの失敗が続いたため、15分ほど待ってからお試しください。" });
-    const { login_id = "", password = "", remember = false } = req.body || {};
+    const { name = "", password = "", remember = false } = req.body || {};
     const { rows } = await pool.query(
       `SELECT id, login_id, display_name, password_hash, is_admin, disabled, session_version FROM users WHERE login_id = $1`,
-      [String(login_id).trim()]
+      [nameKey(name)]
     );
     const u = rows[0];
     const ok = await checkPassword(password, u ? u.password_hash : DUMMY_HASH);
     if (!u || !ok) {
       recordFail(req.ip);
       await new Promise((r) => setTimeout(r, 400));
-      return res.status(401).json({ error: "IDまたはパスワードが違います。" });
+      return res.status(401).json({ error: "名前またはパスワードが違います。" });
     }
     if (u.disabled) return res.status(403).json({ error: "このアカウントは利用停止されています。管理者に確認してください。" });
     failures.delete(req.ip);
@@ -280,11 +286,17 @@ app.get("/api/me", (req, res) => res.json(publicUser(req.user)));
 
 app.put("/api/me", async (req, res, next) => {
   try {
-    const displayName = String(req.body?.name || "").trim().slice(0, 40);
+    const displayName = cleanName(req.body?.name);
     if (!displayName) return res.status(400).json({ error: "名前を入力してください。" });
-    const { rows } = await pool.query(
-      `UPDATE users SET display_name = $2 WHERE id = $1 RETURNING id, login_id, display_name, is_admin`, [req.user.id, displayName]);
-    res.json(publicUser(rows[0]));
+    try {
+      const { rows } = await pool.query(
+        `UPDATE users SET display_name = $2, login_id = $3 WHERE id = $1 RETURNING id, login_id, display_name, is_admin`,
+        [req.user.id, displayName, nameKey(displayName)]);
+      res.json(publicUser(rows[0]));
+    } catch (e) {
+      if (e.code === "23505") return res.status(409).json({ error: NAME_TAKEN });
+      throw e;
+    }
   } catch (e) { next(e); }
 });
 
