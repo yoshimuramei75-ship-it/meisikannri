@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#E6D3B3">
+<title>ログイン｜名刺帳</title>
+<style>
+:root{
+  --white:#ffffff; --ivory:#f8f4eb; --ivory2:#efe8da; --ink:#2b2520; --sub:#8b8177; --line:#e7dfd1;
+  --walnut:#7a5a3a; --walnut-ink:#ffffff; --oak:#e6d3b3; --oak-ink:#3d2e20; --danger:#c0392b; --grain-a:.20;
+  --font:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic UI","Yu Gothic",Meiryo,sans-serif;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --white:#1c1a17; --ivory:#24211d; --ivory2:#2f2a24; --ink:#f1ebe2; --sub:#a59a8b; --line:#3a342d;
+    --walnut:#d3a879; --walnut-ink:#22180f; --oak:#4a3826; --oak-ink:#f4e7d3; --danger:#ff7a6b; --grain-a:.32;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --white:#1c1a17; --ivory:#24211d; --ivory2:#2f2a24; --ink:#f1ebe2; --sub:#a59a8b; --line:#3a342d;
+  --walnut:#d3a879; --walnut-ink:#22180f; --oak:#4a3826; --oak-ink:#f4e7d3; --danger:#ff7a6b; --grain-a:.32;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+html,body{margin:0;height:100%}
+body{background:var(--ivory);color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.5;display:flex;flex-direction:column}
+button,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--walnut);outline-offset:2px}
+
+.wood{position:relative;background-color:var(--oak);color:var(--oak-ink);isolation:isolate}
+.wood::before{content:"";position:absolute;inset:0;z-index:-1;opacity:var(--grain-a);mix-blend-mode:multiply;pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='260'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.0035 0.11' numOctaves='4' seed='11'/%3E%3CfeColorMatrix values='0 0 0 0 0.36 0 0 0 0 0.24 0 0 0 0 0.12 1.6 0 0 0 -0.55'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+  background-size:900px 260px}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .wood::before{mix-blend-mode:screen}}
+:root[data-theme="dark"] .wood::before{mix-blend-mode:screen}
+
+.top{padding:56px 24px 88px;text-align:center}
+.mark{width:64px;height:40px;margin:0 auto 14px;border-radius:5px;background:var(--white);box-shadow:0 6px 16px -8px rgba(60,40,20,.5);position:relative;overflow:hidden}
+.mark::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--walnut)}
+.mark::after{content:"";position:absolute;left:14px;right:12px;top:15px;height:3px;border-radius:2px;background:var(--line);box-shadow:0 8px 0 var(--line)}
+.top h1{margin:0;font-size:30px;font-weight:800;letter-spacing:.06em}
+.top p{margin:4px 0 0;font-size:14px;opacity:.75}
+
+main{flex:1;padding:0 18px 40px}
+.card{position:relative;z-index:1;max-width:400px;margin:-56px auto 0;background:var(--white);border:1px solid var(--line);border-radius:16px;box-shadow:0 18px 40px -24px rgba(60,40,20,.45);padding:24px 22px 22px}
+label.field{display:block;margin-bottom:14px}
+label.field span{display:block;font-size:13px;color:var(--sub);margin-bottom:5px}
+.inputwrap{display:flex;align-items:center;background:var(--ivory2);border:1px solid transparent;border-radius:10px}
+.inputwrap:focus-within{border-color:var(--walnut);background:var(--white)}
+.inputwrap input{flex:1;min-width:0;border:none;background:none;padding:12px 14px;font-size:17px;outline:none}
+.eye{border:none;background:none;color:var(--sub);padding:8px 12px;cursor:pointer;display:flex}
+.remember{display:flex;align-items:center;gap:10px;margin:4px 0 18px;font-size:15px;cursor:pointer;user-select:none}
+.remember input{appearance:none;-webkit-appearance:none;width:22px;height:22px;margin:0;border:1.5px solid var(--line);border-radius:6px;background:var(--white);display:grid;place-items:center;cursor:pointer;flex:none}
+.remember input:checked{background:var(--walnut);border-color:var(--walnut)}
+.remember input:checked::after{content:"";width:6px;height:11px;border:solid var(--walnut-ink);border-width:0 2.5px 2.5px 0;transform:translateY(-1px) rotate(45deg)}
+.remember small{display:block;color:var(--sub);font-size:12.5px}
+.submit{width:100%;border:none;border-radius:12px;background:var(--walnut);color:var(--walnut-ink);padding:14px;font-size:17px;font-weight:700;cursor:pointer}
+.submit:disabled{opacity:.6;cursor:default}
+.error{min-height:1.4em;margin:12px 0 0;color:var(--danger);font-size:14px;text-align:center}
+.tabs{display:grid;grid-template-columns:1fr 1fr;background:var(--ivory2);border-radius:10px;padding:3px;margin-bottom:18px}
+.tabs button{border:none;background:none;border-radius:8px;padding:9px;font-size:15px;font-weight:600;color:var(--sub);cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--white);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.hint{font-size:12.5px;color:var(--sub);margin-top:5px}
+.first{background:var(--ivory2);border-radius:10px;padding:10px 12px;font-size:13.5px;margin-bottom:16px}
+[hidden]{display:none!important}
+.foot{max-width:400px;margin:16px auto 0;text-align:center;font-size:12.5px;color:var(--sub)}
+</style>
+</head>
+<body>
+<header class="top wood">
+  <div class="mark" aria-hidden="true"></div>
+  <h1>名刺帳</h1>
+  <p>ログインしてください</p>
+</header>
+<main>
+  <form class="card" id="form" novalidate>
+    <div class="tabs" role="tablist">
+      <button type="button" role="tab" id="tabLogin" aria-selected="true">ログイン</button>
+      <button type="button" role="tab" id="tabReg" aria-selected="false">新規登録</button>
+    </div>
+    <div class="first" id="firstNote" hidden>まだ誰も登録していません。最初に登録した人が<strong>管理者</strong>になり、メンバーの利用停止などができます。</div>
+    <label class="field" data-reg hidden><span>名前（一覧に「登録者」として表示されます）</span>
+      <div class="inputwrap"><input id="name" name="name" autocomplete="name" maxlength="40"></div>
+    </label>
+    <label class="field"><span>ID</span>
+      <div class="inputwrap"><input id="user" name="username" autocomplete="username" autocapitalize="off" spellcheck="false" required></div>
+      <div class="hint" data-reg hidden>半角英数字で3文字以上（例：yamada）。ログインのときに使います。</div>
+    </label>
+    <label class="field"><span>パスワード</span>
+      <div class="inputwrap">
+        <input id="password" name="password" type="password" autocomplete="current-password" required>
+        <button type="button" class="eye" id="eye" aria-label="パスワードを表示" aria-pressed="false">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+      </div>
+      <div class="hint" data-reg hidden>8文字以上。自分だけが知っているものにしてください。</div>
+    </label>
+    <label class="field" id="inviteField" hidden><span>合言葉</span>
+      <div class="inputwrap"><input id="invite" autocomplete="off" autocapitalize="off"></div>
+    </label>
+    <label class="remember">
+      <input type="checkbox" id="remember" checked>
+      <span>ログインしたままにする<small>30日間、この端末ではIDとパスワードの入力が不要になります</small></span>
+    </label>
+    <button class="submit" id="submit" type="submit">ログイン</button>
+    <p class="error" id="error" role="alert"></p>
+  </form>
+  <p class="foot">共用のパソコンでは「ログインしたままにする」を外してください。</p>
+</main>
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+  let mode = "login", inviteRequired = false;
+
+  try {
+    const u = localStorage.getItem("meishi.lastUser"); if (u) $("user").value = u;
+    const r = localStorage.getItem("meishi.remember"); if (r !== null) $("remember").checked = r === "1";
+  } catch(e) {}
+
+  function setMode(m){
+    mode = m;
+    const reg = m === "register";
+    $("tabLogin").setAttribute("aria-selected", String(!reg));
+    $("tabReg").setAttribute("aria-selected", String(reg));
+    document.querySelectorAll("[data-reg]").forEach(el => el.hidden = !reg);
+    $("inviteField").hidden = !(reg && inviteRequired);
+    $("password").autocomplete = reg ? "new-password" : "current-password";
+    $("submit").textContent = reg ? "登録してはじめる" : "ログイン";
+    $("error").textContent = "";
+    if (reg){ $("user").value = ""; $("password").value = ""; $("name").focus(); }
+    else ($("user").value ? $("password") : $("user")).focus();
+  }
+  $("tabLogin").onclick = () => setMode("login");
+  $("tabReg").onclick = () => setMode("register");
+
+  fetch("/api/auth-config").then(r => r.json()).then(cfg => {
+    inviteRequired = !!cfg.inviteRequired;
+    if (!cfg.hasUsers){ $("firstNote").hidden = false; setMode("register"); }
+    else setMode(mode);
+  }).catch(() => setMode("login"));
+
+  $("eye").onclick = () => {
+    const show = $("password").type === "password";
+    $("password").type = show ? "text" : "password";
+    $("eye").setAttribute("aria-pressed", String(show));
+    $("eye").setAttribute("aria-label", show ? "パスワードを隠す" : "パスワードを表示");
+  };
+
+  $("form").addEventListener("submit", async e => {
+    e.preventDefault();
+    const login_id = $("user").value.trim(), password = $("password").value, remember = $("remember").checked;
+    const reg = mode === "register";
+    const err = msg => { $("error").textContent = msg; };
+    if (reg && !$("name").value.trim()) return err("名前を入力してください。");
+    if (!login_id || !password) return err("IDとパスワードを入力してください。");
+    if (reg && !/^[A-Za-z0-9._@-]{3,40}$/.test(login_id)) return err("IDは半角英数字で3文字以上にしてください。");
+    if (reg && password.length < 8) return err("パスワードは8文字以上にしてください。");
+    if (reg && inviteRequired && !$("invite").value.trim()) return err("合言葉を入力してください。");
+
+    $("submit").disabled = true; $("submit").textContent = reg ? "登録しています…" : "確認しています…"; err("");
+    try {
+      const body = reg
+        ? { name: $("name").value.trim(), login_id, password, invite: $("invite").value, remember }
+        : { login_id, password, remember };
+      const r = await fetch(reg ? "/api/register" : "/api/login", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body) });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(data.error || "うまくいきませんでした。");
+      try { localStorage.setItem("meishi.lastUser", login_id); localStorage.setItem("meishi.remember", remember ? "1" : "0"); } catch(e) {}
+      location.replace("/");
+    } catch(ex) {
+      err(ex.message === "Failed to fetch" ? "通信できませんでした。電波の良い場所でもう一度お試しください。" : ex.message);
+      $("submit").disabled = false; $("submit").textContent = reg ? "登録してはじめる" : "ログイン";
+    }
+  });
+})();
+</script>
+</body>
+</html>
