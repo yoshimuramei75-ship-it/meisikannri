@@ -36,6 +36,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
 img{max-width:100%}
 :focus-visible{outline:2px solid var(--walnut);outline-offset:2px}
+[hidden]{display:none!important}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 
 /* 木目：SVGノイズを横に引き伸ばして年輪のような筋にする */
@@ -52,6 +53,7 @@ img{max-width:100%}
 .shelf .row{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
 .shelf h1{margin:0;font-size:32px;font-weight:800;letter-spacing:.02em;line-height:1.15}
 .shelf .count{font-size:13px;opacity:.75;margin-top:2px}
+.logout{border:none;background:none;color:inherit;text-decoration:underline;text-underline-offset:2px;font-size:13px;margin-left:12px;padding:0}
 .seg{display:inline-flex;background:rgba(255,255,255,.55);border-radius:9px;padding:2px}
 .seg button{border:none;background:none;padding:6px 10px;border-radius:7px;color:var(--oak-ink);display:flex}
 .seg button[aria-pressed="true"]{background:var(--white);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
@@ -171,6 +173,24 @@ img{max-width:100%}
 .lightbox.open{display:flex}
 .lightbox img{max-height:100%;object-fit:contain;border-radius:4px}
 
+.lock{display:inline-flex;align-items:center;gap:4px}
+.f.top textarea.private{background:none}
+.acc-row{display:flex;align-items:center;flex-wrap:wrap;gap:8px 10px;padding:12px 16px}
+.acc-row+.acc-row{border-top:1px solid var(--line)}
+.acc-row .who{flex:1;min-width:0}
+.acc-row .who b{display:block;font-size:16px}
+.acc-row .who small{color:var(--sub);font-size:12.5px}
+.badge{display:inline-block;font-size:11px;font-weight:700;border-radius:999px;padding:1px 8px;margin-left:6px;vertical-align:2px}
+.badge.admin{background:var(--oak);color:var(--oak-ink)}
+.badge.off{background:var(--ivory2);color:var(--danger)}
+.mini{border:1px solid var(--line);background:var(--white);border-radius:999px;padding:5px 11px;font-size:13px;color:var(--walnut);font-weight:600;white-space:nowrap}
+.mini.warn{color:var(--danger)}
+.acc-actions{display:flex;gap:6px;flex-wrap:wrap;width:100%}
+#account .f label{width:120px}
+.btnrow{padding:12px 16px;border-top:1px solid var(--line);display:flex;justify-content:flex-end}
+.solid{border:none;background:var(--walnut);color:var(--walnut-ink);border-radius:10px;padding:9px 18px;font-weight:700;font-size:15px}
+.acc-msg{padding:0 16px 10px;font-size:13.5px;min-height:0}
+.acc-msg.err{color:var(--danger)}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(100px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--white);padding:10px 18px;border-radius:999px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:40}
 .toast.show{opacity:1}
 </style>
@@ -181,7 +201,7 @@ img{max-width:100%}
     <div class="row">
       <div>
         <h1>名刺帳</h1>
-        <div class="count" id="count">読み込み中…</div>
+        <div class="count"><span id="count">読み込み中…</span><button type="button" class="logout" id="meBtn" hidden><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" style="vertical-align:-1px;margin-right:3px"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg><span id="meName"></span></button></div>
       </div>
       <div class="seg" role="group" aria-label="表示の切り替え">
         <button id="vList" aria-pressed="true" aria-label="リスト表示"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.5" cy="6" r="1"/><circle cx="3.5" cy="12" r="1"/><circle cx="3.5" cy="18" r="1"/></svg></button>
@@ -277,9 +297,43 @@ img{max-width:100%}
       <div class="f"><label for="f_met_place">会った場所</label><input id="f_met_place" placeholder="例：展示会、〇〇さんの紹介" autocomplete="off"></div>
       <div class="f"><label for="f_tags">タグ</label><input id="f_tags" placeholder="スペース区切り（例：取引先 2026展示会）" autocomplete="off"></div>
       <div class="sugg" id="tagSugg"></div>
-      <div class="f top"><label for="f_memo">メモ</label><textarea id="f_memo" placeholder="話した内容、特徴など"></textarea></div>
+      <div class="f top"><label for="f_memo">共有メモ</label><textarea id="f_memo" placeholder="話した内容、特徴など（メンバー全員が見られます）"></textarea></div>
+    </div>
+    <div class="group-title"><span class="lock"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>自分だけのメモ（ほかの人には見えません）</span></div>
+    <div class="group">
+      <div class="f top"><label for="f_my_note" class="sr">自分だけのメモ</label><textarea id="f_my_note" class="private" placeholder="自分用の覚え書き"></textarea></div>
     </div>
     <button class="dangerbtn" id="deleteBtn" hidden>この名刺を削除</button>
+  </div>
+</section>
+
+<!-- アカウント画面 -->
+<section class="screen" id="account" aria-labelledby="accTitle">
+  <div class="inner">
+    <div class="nav">
+      <button class="navbtn" data-back><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m15 5-7 7 7 7"/></svg>名刺帳</button>
+      <span class="t" id="accTitle">アカウント</span>
+      <span style="width:70px"></span>
+    </div>
+    <div class="group-title">名前（登録者として表示されます）</div>
+    <div class="group">
+      <div class="f"><label for="accName">名前</label><input id="accName" maxlength="40" autocomplete="name"></div>
+      <div class="f"><label>ID</label><span id="accId" style="color:var(--sub)"></span></div>
+      <div class="acc-msg" id="nameMsg"></div>
+      <div class="btnrow"><button class="solid" id="saveName">名前を保存</button></div>
+    </div>
+    <div class="group-title">パスワードの変更</div>
+    <div class="group">
+      <div class="f"><label for="pwCur">今のパスワード</label><input id="pwCur" type="password" autocomplete="current-password"></div>
+      <div class="f"><label for="pwNew">新しいパスワード</label><input id="pwNew" type="password" autocomplete="new-password" placeholder="8文字以上"></div>
+      <div class="acc-msg" id="pwMsg"></div>
+      <div class="btnrow"><button class="solid" id="savePw">変更する</button></div>
+    </div>
+    <div id="membersWrap" hidden>
+      <div class="group-title">メンバー管理（管理者だけに表示）</div>
+      <div class="group" id="members"></div>
+    </div>
+    <button class="dangerbtn" id="logoutBtn">ログアウト</button>
   </div>
 </section>
 
@@ -288,7 +342,7 @@ img{max-width:100%}
 
 <script>
 (function(){
-  const FIELDS = ["company","department","title","name","name_kana","phone","mobile","fax","email","address","url","met_place","memo"];
+  const FIELDS = ["company","department","title","name","name_kana","phone","mobile","fax","email","address","url","met_place","memo","my_note"];
   const OCR_FIELDS = ["company","department","title","name","name_kana","phone","mobile","fax","email","address","url"];
   const $ = id => document.getElementById(id);
   const ICON = {
@@ -306,6 +360,7 @@ img{max-width:100%}
   let current = null;   // 詳細画面のカード
   let editing = null;   // {id|null, imageBlob|null, localUrl|null, hasImage}
   let ocrCtl = null, saving = false;
+  let me = null;        // ログイン中のメンバー
   let pickFor = "new";  // 写真の選択先："new"＝新しい名刺、"editor"＝編集中の名刺の写真を差し替え
 
   try { view = localStorage.getItem("meishi.view") === "card" ? "card" : "list"; } catch(e) {}
@@ -341,6 +396,7 @@ img{max-width:100%}
   async function api(url, opts){
     const r = await fetch(url, opts);
     if (r.status===204) return null;
+    if (r.status===401){ location.href="/login.html"; throw new Error("ログインが必要です。"); }
     const body = await r.json().catch(()=>({}));
     if (!r.ok) throw new Error(body.error || "通信に失敗しました（"+r.status+"）");
     return body;
@@ -498,9 +554,15 @@ img{max-width:100%}
       const tg=el("div","tags"); for (const t of c.tags) tg.append(el("span","tag","#"+t));
       it.append(tg); mem.append(it);
     }
-    addItem(mem,"メモ",c.memo);
-    addItem(mem,"登録日",longDate(c.created_at));
+    addItem(mem,"共有メモ",c.memo);
+    addItem(mem,"登録",[c.created_by_name, longDate(c.created_at)].filter(Boolean).join("　"));
     body.append(mem);
+    if (c.my_note){
+      const t=el("div","group-title"); t.innerHTML='<span class="lock"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span>';
+      t.firstChild.append("自分だけのメモ");
+      const g=el("div","group"); const it=el("div","item"); it.append(el("div","vl",c.my_note)); g.append(it);
+      body.append(t,g);
+    }
 
     if (c.has_image){
       body.append(el("div","group-title","名刺の画像"));
@@ -707,13 +769,77 @@ img{max-width:100%}
   document.addEventListener("keydown",e=>{ if(e.key==="Escape"){ if($("lightbox").classList.contains("open")) closeLightbox(); else if(stack.length) back(); } });
 
   $("exportBtn").onclick=()=>{
-    const head=["会社名","部署","肩書","氏名","ふりがな","電話","携帯","FAX","メール","住所","Webサイト","会った場所","メモ","タグ","登録日"];
+    const head=["会社名","部署","肩書","氏名","ふりがな","電話","携帯","FAX","メール","住所","Webサイト","会った場所","共有メモ","自分だけのメモ","タグ","登録者","登録日"];
     const q=v=>'"'+String(v==null?"":v).replace(/"/g,'""')+'"';
-    const rows=cards.map(c=>FIELDS.map(f=>q(c[f])).concat(q((c.tags||[]).join(" ")),q(longDate(c.created_at))).join(","));
+    const rows=cards.map(c=>FIELDS.map(f=>q(c[f])).concat(q((c.tags||[]).join(" ")),q(c.created_by_name),q(longDate(c.created_at))).join(","));
     const csv="\ufeff"+[head.map(q).join(",")].concat(rows).join("\r\n");
     const url=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));
     const a=el("a"); a.href=url; a.download="meishi.csv"; document.body.append(a); a.click(); a.remove();
     setTimeout(()=>URL.revokeObjectURL(url),1000);
+  };
+
+  // ---------- アカウント ----------
+  function showMe(){ if(!me) return; $("meName").textContent=me.name; $("meBtn").hidden=false; }
+  fetch("/api/me").then(r=>r.ok?r.json():null).then(u=>{ if(u){ me=u; showMe(); } }).catch(()=>{});
+  function accMsg(id,msg,err){ const m=$(id); m.textContent=msg||""; m.classList.toggle("err",!!err); }
+  $("meBtn").onclick=()=>{
+    if(!me) return;
+    $("accName").value=me.name; $("accId").textContent=me.login_id;
+    $("pwCur").value=""; $("pwNew").value=""; accMsg("nameMsg",""); accMsg("pwMsg","");
+    $("membersWrap").hidden=!me.is_admin;
+    if (me.is_admin) loadMembers();
+    push($("account"));
+  };
+  $("saveName").onclick=async()=>{
+    try { me=await api("/api/me",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:$("accName").value})}); showMe(); accMsg("nameMsg","保存しました。これから登録する名刺に、この名前が表示されます。"); }
+    catch(e){ accMsg("nameMsg",e.message,true); }
+  };
+  $("savePw").onclick=async()=>{
+    try {
+      await api("/api/me/password",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({current:$("pwCur").value,next:$("pwNew").value})});
+      $("pwCur").value=""; $("pwNew").value="";
+      accMsg("pwMsg","変更しました。ほかの端末ではもう一度ログインが必要になります。");
+    } catch(e){ accMsg("pwMsg",e.message,true); }
+  };
+  async function loadMembers(){
+    const box=$("members"); box.textContent="";
+    let users=[];
+    try { users=await api("/api/users"); } catch(e){ box.append(el("div","acc-msg err",e.message)); return; }
+    for (const u of users){
+      const row=el("div","acc-row"), who=el("div","who"), b=el("b",null,u.name);
+      if (u.is_admin) b.append(el("span","badge admin","管理者"));
+      if (u.disabled) b.append(el("span","badge off","利用停止中"));
+      who.append(b, el("small",null,"ID: "+u.login_id+"　登録した名刺 "+u.card_count+"枚"));
+      row.append(who);
+      if (u.id!==me.id){
+        const acts=el("div","acc-actions");
+        const toggle=el("button","mini"+(u.disabled?"":" warn"), u.disabled?"利用を再開":"利用停止");
+        toggle.onclick=()=>updateMember(u, {disabled:!u.disabled}, u.disabled ? u.name+" さんの利用を再開しますか？" : u.name+" さんを利用停止にしますか？\n（すぐにログアウトされ、ログインできなくなります。登録した名刺は残ります）");
+        const adm=el("button","mini", u.is_admin?"管理者を外す":"管理者にする");
+        adm.onclick=()=>updateMember(u, {is_admin:!u.is_admin}, u.is_admin ? u.name+" さんを管理者から外しますか？" : u.name+" さんを管理者にしますか？\n（メンバー管理ができるようになります）");
+        const pw=el("button","mini","パスワード再設定");
+        pw.onclick=async()=>{
+          const np=prompt(u.name+" さんの新しいパスワード（8文字以上）を入力してください。\n本人に伝えて、ログイン後に変更してもらってください。");
+          if (np==null) return;
+          try { await api("/api/users/"+u.id+"/password",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({password:np})}); toast("パスワードを再設定しました"); }
+          catch(e){ alert(e.message); }
+        };
+        acts.append(toggle, adm, pw); row.append(acts);
+      } else {
+        row.append(el("small",null,"あなた"));
+      }
+      box.append(row);
+    }
+  }
+  async function updateMember(u, change, question){
+    if (!confirm(question)) return;
+    try { await api("/api/users/"+u.id,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(change)}); loadMembers(); }
+    catch(e){ alert(e.message); }
+  }
+  $("logoutBtn").onclick=async()=>{
+    if (!confirm("ログアウトしますか？")) return;
+    try { await fetch("/api/logout",{method:"POST"}); } catch(e) {}
+    location.replace("/login.html");
   };
 
   history.replaceState({depth:0},"");
