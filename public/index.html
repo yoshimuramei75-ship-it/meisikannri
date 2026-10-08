@@ -36,7 +36,6 @@ button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
 img{max-width:100%}
 :focus-visible{outline:2px solid var(--walnut);outline-offset:2px}
-[hidden]{display:none!important}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 
 /* 木目：SVGノイズを横に引き伸ばして年輪のような筋にする */
@@ -53,7 +52,6 @@ img{max-width:100%}
 .shelf .row{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
 .shelf h1{margin:0;font-size:32px;font-weight:800;letter-spacing:.02em;line-height:1.15}
 .shelf .count{font-size:13px;opacity:.75;margin-top:2px}
-.logout{border:none;background:none;color:inherit;text-decoration:underline;text-underline-offset:2px;font-size:13px;margin-left:12px;padding:0}
 .seg{display:inline-flex;background:rgba(255,255,255,.55);border-radius:9px;padding:2px}
 .seg button{border:none;background:none;padding:6px 10px;border-radius:7px;color:var(--oak-ink);display:flex}
 .seg button[aria-pressed="true"]{background:var(--white);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
@@ -151,9 +149,6 @@ img{max-width:100%}
 .reading .scan{display:block;animation:scan 1.6s ease-in-out infinite alternate}
 @keyframes scan{from{top:4%}to{top:94%}}
 @media (prefers-reduced-motion:reduce){.reading .scan{animation:none;top:50%}}
-.photo.none{background:var(--ivory2);border:1.5px dashed var(--line);color:var(--sub);font-size:14px;min-height:96px}
-.photoacts{display:flex;gap:8px;margin:10px 16px 0;flex-wrap:wrap}
-.photoacts button{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--white);color:var(--walnut);border-radius:999px;padding:7px 14px;font-size:14px;font-weight:600}
 .status{margin:10px 22px 0;font-size:14px;color:var(--sub);min-height:1.2em}
 .status.err{color:var(--danger)}
 .reread{margin:8px 16px 0;border:none;background:none;color:var(--walnut);font-weight:600;padding:4px 6px}
@@ -173,24 +168,6 @@ img{max-width:100%}
 .lightbox.open{display:flex}
 .lightbox img{max-height:100%;object-fit:contain;border-radius:4px}
 
-.lock{display:inline-flex;align-items:center;gap:4px}
-.f.top textarea.private{background:none}
-.acc-row{display:flex;align-items:center;flex-wrap:wrap;gap:8px 10px;padding:12px 16px}
-.acc-row+.acc-row{border-top:1px solid var(--line)}
-.acc-row .who{flex:1;min-width:0}
-.acc-row .who b{display:block;font-size:16px}
-.acc-row .who small{color:var(--sub);font-size:12.5px}
-.badge{display:inline-block;font-size:11px;font-weight:700;border-radius:999px;padding:1px 8px;margin-left:6px;vertical-align:2px}
-.badge.admin{background:var(--oak);color:var(--oak-ink)}
-.badge.off{background:var(--ivory2);color:var(--danger)}
-.mini{border:1px solid var(--line);background:var(--white);border-radius:999px;padding:5px 11px;font-size:13px;color:var(--walnut);font-weight:600;white-space:nowrap}
-.mini.warn{color:var(--danger)}
-.acc-actions{display:flex;gap:6px;flex-wrap:wrap;width:100%}
-#account .f label{width:120px}
-.btnrow{padding:12px 16px;border-top:1px solid var(--line);display:flex;justify-content:flex-end}
-.solid{border:none;background:var(--walnut);color:var(--walnut-ink);border-radius:10px;padding:9px 18px;font-weight:700;font-size:15px}
-.acc-msg{padding:0 16px 10px;font-size:13.5px;min-height:0}
-.acc-msg.err{color:var(--danger)}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(100px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--white);padding:10px 18px;border-radius:999px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:40}
 .toast.show{opacity:1}
 </style>
@@ -201,7 +178,7 @@ img{max-width:100%}
     <div class="row">
       <div>
         <h1>名刺帳</h1>
-        <div class="count"><span id="count">読み込み中…</span><button type="button" class="logout" id="meBtn" hidden><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" style="vertical-align:-1px;margin-right:3px"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg><span id="meName"></span></button></div>
+        <div class="count" id="count">読み込み中…</div>
       </div>
       <div class="seg" role="group" aria-label="表示の切り替え">
         <button id="vList" aria-pressed="true" aria-label="リスト表示"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.5" cy="6" r="1"/><circle cx="3.5" cy="12" r="1"/><circle cx="3.5" cy="18" r="1"/></svg></button>
@@ -268,12 +245,9 @@ img{max-width:100%}
       <button class="navbtn strong" id="saveBtn">保存</button>
     </div>
     <div id="ePhotoWrap"></div>
-    <div class="photoacts">
-      <button type="button" id="ePhotoCam"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg><span id="ePhotoCamLabel">撮り直す</span></button>
-      <button type="button" id="ePhotoPick"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-9 9"/></svg><span id="ePhotoPickLabel">別の写真を選ぶ</span></button>
-    </div>
     <div class="status" id="status" aria-live="polite"></div>
     <button class="reread" id="rereadBtn" hidden>もう一度読み取る</button>
+    <button class="reread" id="cropToggle" hidden>元の写真に戻す</button>
 
     <div class="group">
       <div class="f"><label for="f_name">氏名</label><input id="f_name" class="big" autocomplete="off"></div>
@@ -297,42 +271,9 @@ img{max-width:100%}
       <div class="f"><label for="f_met_place">会った場所</label><input id="f_met_place" placeholder="例：展示会、〇〇さんの紹介" autocomplete="off"></div>
       <div class="f"><label for="f_tags">タグ</label><input id="f_tags" placeholder="スペース区切り（例：取引先 2026展示会）" autocomplete="off"></div>
       <div class="sugg" id="tagSugg"></div>
-      <div class="f top"><label for="f_memo">共有メモ</label><textarea id="f_memo" placeholder="話した内容、特徴など（メンバー全員が見られます）"></textarea></div>
-    </div>
-    <div class="group-title"><span class="lock"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>自分だけのメモ（ほかの人には見えません）</span></div>
-    <div class="group">
-      <div class="f top"><label for="f_my_note" class="sr">自分だけのメモ</label><textarea id="f_my_note" class="private" placeholder="自分用の覚え書き"></textarea></div>
+      <div class="f top"><label for="f_memo">メモ</label><textarea id="f_memo" placeholder="話した内容、特徴など"></textarea></div>
     </div>
     <button class="dangerbtn" id="deleteBtn" hidden>この名刺を削除</button>
-  </div>
-</section>
-
-<!-- アカウント画面 -->
-<section class="screen" id="account" aria-labelledby="accTitle">
-  <div class="inner">
-    <div class="nav">
-      <button class="navbtn" data-back><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m15 5-7 7 7 7"/></svg>名刺帳</button>
-      <span class="t" id="accTitle">アカウント</span>
-      <span style="width:70px"></span>
-    </div>
-    <div class="group-title">名前（ログインと「登録者」の表示に使います）</div>
-    <div class="group">
-      <div class="f"><label for="accName">名前</label><input id="accName" maxlength="40" autocomplete="name"></div>
-      <div class="acc-msg" id="nameMsg"></div>
-      <div class="btnrow"><button class="solid" id="saveName">名前を保存</button></div>
-    </div>
-    <div class="group-title">パスワードの変更</div>
-    <div class="group">
-      <div class="f"><label for="pwCur">今のパスワード</label><input id="pwCur" type="password" autocomplete="current-password"></div>
-      <div class="f"><label for="pwNew">新しいパスワード</label><input id="pwNew" type="password" autocomplete="new-password" placeholder="8文字以上"></div>
-      <div class="acc-msg" id="pwMsg"></div>
-      <div class="btnrow"><button class="solid" id="savePw">変更する</button></div>
-    </div>
-    <div id="membersWrap" hidden>
-      <div class="group-title">メンバー管理（管理者だけに表示）</div>
-      <div class="group" id="members"></div>
-    </div>
-    <button class="dangerbtn" id="logoutBtn">ログアウト</button>
   </div>
 </section>
 
@@ -341,7 +282,7 @@ img{max-width:100%}
 
 <script>
 (function(){
-  const FIELDS = ["company","department","title","name","name_kana","phone","mobile","fax","email","address","url","met_place","memo","my_note"];
+  const FIELDS = ["company","department","title","name","name_kana","phone","mobile","fax","email","address","url","met_place","memo"];
   const OCR_FIELDS = ["company","department","title","name","name_kana","phone","mobile","fax","email","address","url"];
   const $ = id => document.getElementById(id);
   const ICON = {
@@ -359,8 +300,6 @@ img{max-width:100%}
   let current = null;   // 詳細画面のカード
   let editing = null;   // {id|null, imageBlob|null, localUrl|null, hasImage}
   let ocrCtl = null, saving = false;
-  let me = null;        // ログイン中のメンバー
-  let pickFor = "new";  // 写真の選択先："new"＝新しい名刺、"editor"＝編集中の名刺の写真を差し替え
 
   try { view = localStorage.getItem("meishi.view") === "card" ? "card" : "list"; } catch(e) {}
 
@@ -395,7 +334,6 @@ img{max-width:100%}
   async function api(url, opts){
     const r = await fetch(url, opts);
     if (r.status===204) return null;
-    if (r.status===401){ location.href="/login.html"; throw new Error("ログインが必要です。"); }
     const body = await r.json().catch(()=>({}));
     if (!r.ok) throw new Error(body.error || "通信に失敗しました（"+r.status+"）");
     return body;
@@ -553,15 +491,9 @@ img{max-width:100%}
       const tg=el("div","tags"); for (const t of c.tags) tg.append(el("span","tag","#"+t));
       it.append(tg); mem.append(it);
     }
-    addItem(mem,"共有メモ",c.memo);
-    addItem(mem,"登録",[c.created_by_name, longDate(c.created_at)].filter(Boolean).join("　"));
+    addItem(mem,"メモ",c.memo);
+    addItem(mem,"登録日",longDate(c.created_at));
     body.append(mem);
-    if (c.my_note){
-      const t=el("div","group-title"); t.innerHTML='<span class="lock"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span>';
-      t.firstChild.append("自分だけのメモ");
-      const g=el("div","group"); const it=el("div","item"); it.append(el("div","vl",c.my_note)); g.append(it);
-      body.append(t,g);
-    }
 
     if (c.has_image){
       body.append(el("div","group-title","名刺の画像"));
@@ -591,51 +523,26 @@ img{max-width:100%}
   // ---------- 編集 ----------
   function openEditor(card, blob){
     const localUrl = blob ? URL.createObjectURL(blob) : null;
-    editing = { id: card ? card.id : null, imageBlob: blob||null, localUrl, hasImage: !!(card && card.has_image), photoChanged: false };
+    editing = { id: card ? card.id : null, imageBlob: blob||null, localUrl, hasImage: !!(card && card.has_image) };
     $("eTitle").textContent = card ? "名刺を編集" : "新しい名刺";
     for (const f of FIELDS) $("f_"+f).value = (card && card[f]) || "";
     $("f_tags").value = card && card.tags ? card.tags.join(" ") : "";
     renderTagSuggest();
-    renderEditorPhoto(localUrl || (card && card.has_image ? imgUrl(card) : null));
-    $("rereadBtn").hidden = !blob;
-    $("rereadBtn").textContent = "もう一度読み取る";
-    $("deleteBtn").hidden = !card;
-    setStatus("");
-    push($("editor"));
-    if (blob) runOcr();
-    else if (!card) setTimeout(()=>$("f_name").focus(),300);
-  }
-  function renderEditorPhoto(src){
     const wrap=$("ePhotoWrap"); wrap.textContent="";
+    const src = localUrl || (card && card.has_image ? imgUrl(card) : null);
     if (src){
       const p=el("div","photo"); p.id="photoBox";
       const img=el("img"); img.alt="名刺の写真"; img.src=src; p.append(img, el("div","scan"));
       wrap.append(p);
-    } else {
-      wrap.append(el("div","photo none","名刺の写真はまだありません"));
     }
-    $("ePhotoCamLabel").textContent = src ? "撮り直す" : "撮影して追加";
-    $("ePhotoPickLabel").textContent = src ? "別の写真を選ぶ" : "写真から追加";
+    $("rereadBtn").hidden = !blob;
+    $("deleteBtn").hidden = !card;
+    setStatus("");
+    push($("editor"));
+    $("cropToggle").hidden = true;
+    if (blob) autoCrop(editing).then(ok=>{ if (ok) runOcr(); });
+    else if (!card) setTimeout(()=>$("f_name").focus(),300);
   }
-  // 編集中の名刺の写真を差し替える（保存を押すまでサーバーには送らない）
-  function setEditorPhoto(blob){
-    if (!editing) return;
-    if (ocrCtl){ ocrCtl.abort(); ocrCtl=null; }
-    if (editing.localUrl) URL.revokeObjectURL(editing.localUrl);
-    editing.imageBlob=blob; editing.localUrl=URL.createObjectURL(blob); editing.photoChanged=true;
-    renderEditorPhoto(editing.localUrl);
-    $("rereadBtn").hidden=false;
-    $("rereadBtn").disabled=false;
-    if (editing.id){
-      $("rereadBtn").textContent="この写真から読み取り直す";
-      setStatus("写真を差し替えました。「保存」を押すと反映されます。");
-    } else {
-      runOcr();
-    }
-  }
-  $("ePhotoCam").onclick=()=>{ pickFor="editor"; $("camInput").click(); };
-  $("ePhotoPick").onclick=()=>{ pickFor="editor"; $("fileInput").click(); };
-
   function cleanupEditor(){
     if (ocrCtl){ ocrCtl.abort(); ocrCtl=null; }
     if (editing && editing.localUrl) URL.revokeObjectURL(editing.localUrl);
@@ -651,6 +558,116 @@ img{max-width:100%}
     }
   }
   $("f_tags").addEventListener("input", renderTagSuggest);
+
+
+  // ---------- 名刺の自動切り抜き（四隅検出→台形補正） ----------
+  function setEditorImage(target, blob){
+    if (target.localUrl) URL.revokeObjectURL(target.localUrl);
+    target.imageBlob = blob;
+    target.localUrl = URL.createObjectURL(blob);
+    const img = document.querySelector("#photoBox img");
+    if (img) img.src = target.localUrl;
+  }
+  function validQuad(q){
+    // q: [[x,y]*4]（0〜1）。凸四角形で、ある程度の大きさがあること
+    let area=0, sign=0;
+    for (let i=0;i<4;i++){
+      const a=q[i], b=q[(i+1)%4], c=q[(i+2)%4];
+      area += a[0]*b[1]-b[0]*a[1];
+      const cr=(b[0]-a[0])*(c[1]-b[1])-(b[1]-a[1])*(c[0]-b[0]);
+      if (Math.abs(cr)<1e-6) return false;
+      if (!sign) sign=Math.sign(cr); else if (sign!==Math.sign(cr)) return false;
+    }
+    return Math.abs(area)/2 >= 0.08;
+  }
+  async function warpCard(blob, corners){
+    const bmp = await createImageBitmap(blob);
+    const W=bmp.width, H=bmp.height;
+    const q = corners.map(([x,y])=>[x*W,y*H]); // tl,tr,br,bl
+    const d=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]);
+    let ow=(d(q[0],q[1])+d(q[3],q[2]))/2, oh=(d(q[0],q[3])+d(q[1],q[2]))/2;
+    const s=Math.min(1,1600/Math.max(ow,oh));
+    ow=Math.round(ow*s); oh=Math.round(oh*s);
+    if (ow<200||oh<120) return null;
+    const asp=Math.max(ow,oh)/Math.min(ow,oh);
+    if (asp>3) return null; // 名刺らしくない比率
+
+    const src=document.createElement("canvas"); src.width=W; src.height=H;
+    const sctx=src.getContext("2d"); sctx.drawImage(bmp,0,0);
+    const sd=sctx.getImageData(0,0,W,H).data;
+
+    // 単位正方形 → 四角形 の射影変換
+    const [x0,y0]=q[0],[x1,y1]=q[1],[x2,y2]=q[2],[x3,y3]=q[3];
+    const dx1=x1-x2, dx2=x3-x2, dx3=x0-x1+x2-x3;
+    const dy1=y1-y2, dy2=y3-y2, dy3=y0-y1+y2-y3;
+    let a,b,c,dd,e,f,g,h;
+    if (Math.abs(dx3)<1e-9 && Math.abs(dy3)<1e-9){
+      a=x1-x0; b=x2-x1; c=x0; dd=y1-y0; e=y2-y1; f=y0; g=0; h=0;
+      // アフィンの場合 b は x3-x0 と等しい
+      b=x3-x0; e=y3-y0;
+    } else {
+      const den=dx1*dy2-dx2*dy1;
+      g=(dx3*dy2-dx2*dy3)/den; h=(dx1*dy3-dx3*dy1)/den;
+      a=x1-x0+g*x1; b=x3-x0+h*x3; c=x0;
+      dd=y1-y0+g*y1; e=y3-y0+h*y3; f=y0;
+    }
+    const out=document.createElement("canvas"); out.width=ow; out.height=oh;
+    const octx=out.getContext("2d"); const od=octx.createImageData(ow,oh); const o=od.data;
+    for (let j=0;j<oh;j++){
+      const v=(j+0.5)/oh;
+      for (let i=0;i<ow;i++){
+        const u=(i+0.5)/ow;
+        const w=g*u+h*v+1;
+        const sx=(a*u+b*v+c)/w-0.5, sy=(dd*u+e*v+f)/w-0.5;
+        const ix=Math.floor(sx), iy=Math.floor(sy), fx=sx-ix, fy=sy-iy;
+        const px=Math.min(W-1,Math.max(0,ix)), py=Math.min(H-1,Math.max(0,iy));
+        const qx=Math.min(W-1,px+1), qy=Math.min(H-1,py+1);
+        const p00=(py*W+px)*4, p10=(py*W+qx)*4, p01=(qy*W+px)*4, p11=(qy*W+qx)*4;
+        const k=(j*ow+i)*4;
+        for (let ch=0;ch<3;ch++){
+          o[k+ch]=(sd[p00+ch]*(1-fx)+sd[p10+ch]*fx)*(1-fy)+(sd[p01+ch]*(1-fx)+sd[p11+ch]*fx)*fy;
+        }
+        o[k+3]=255;
+      }
+    }
+    octx.putImageData(od,0,0);
+    return await new Promise(res=>out.toBlob(res,"image/jpeg",0.9));
+  }
+  // 成功しても失敗しても元の写真で続行できる（戻り値: 編集画面がまだ有効か）
+  async function autoCrop(target){
+    const box=$("photoBox");
+    box && box.classList.add("reading");
+    $("rereadBtn").disabled=true;
+    setStatus("名刺の枠を探しています…");
+    const ctl=new AbortController(); if (ocrCtl) ocrCtl.abort(); ocrCtl=ctl;
+    try {
+      const fd=new FormData(); fd.append("image",target.imageBlob,"card.jpg");
+      const r=await api("/api/detect",{method:"POST",body:fd,signal:ctl.signal});
+      if (editing!==target) return false;
+      if (r && r.corners && validQuad(r.corners)){
+        const cropped=await warpCard(target.imageBlob,r.corners);
+        if (editing!==target) return false;
+        if (cropped){
+          target.originalBlob=target.imageBlob; target.croppedBlob=cropped; target.useCropped=true;
+          setEditorImage(target,cropped);
+          $("cropToggle").textContent="元の写真に戻す"; $("cropToggle").hidden=false;
+        }
+      }
+    } catch(e){
+      if (editing!==target || e.name==="AbortError") return false;
+      // 検出に失敗したら元の写真のまま読み取りへ
+    } finally {
+      if (ocrCtl===ctl) ocrCtl=null;
+      if (editing===target){ box && box.classList.remove("reading"); $("rereadBtn").disabled=false; }
+    }
+    return editing===target;
+  }
+  $("cropToggle").onclick=()=>{
+    const t=editing; if (!t || !t.originalBlob) return;
+    t.useCropped=!t.useCropped;
+    setEditorImage(t, t.useCropped ? t.croppedBlob : t.originalBlob);
+    $("cropToggle").textContent = t.useCropped ? "元の写真に戻す" : "切り抜いた写真に戻す";
+  };
 
   async function runOcr(){
     if (!editing || !editing.imageBlob) return;
@@ -680,10 +697,7 @@ img{max-width:100%}
       if (editing===target){ box && box.classList.remove("reading"); $("rereadBtn").disabled=false; }
     }
   }
-  $("rereadBtn").onclick=()=>{
-    if (editing && editing.id && !confirm("会社名・氏名・連絡先などを、この写真から読み取った内容で入れ直しますか？\n（会った場所・タグ・メモはそのまま残ります）")) return;
-    for (const f of OCR_FIELDS) $("f_"+f).value=""; runOcr();
-  };
+  $("rereadBtn").onclick=()=>{ for (const f of OCR_FIELDS) $("f_"+f).value=""; runOcr(); };
 
   async function save(){
     if (saving || !editing) return;
@@ -694,11 +708,7 @@ img{max-width:100%}
     const target=editing;
     try {
       if (target.id){
-        let row=await api("/api/cards/"+target.id,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(data)});
-        if (target.photoChanged && target.imageBlob){
-          const fd=new FormData(); fd.append("image",target.imageBlob,"card.jpg");
-          row=await api("/api/cards/"+target.id+"/image",{method:"PUT",body:fd});
-        }
+        const row=await api("/api/cards/"+target.id,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(data)});
         cards=cards.map(c=>c.id===row.id?row:c);
         current=row; renderDetail();
         toast("変更を保存しました");
@@ -740,21 +750,16 @@ img{max-width:100%}
   fab.addEventListener("click",()=>{
     if (longPressed){ longPressed=false; return; }
     if (menu.classList.contains("open")){ closeMenu(); return; }
-    pickFor="new"; $("camInput").click();
+    $("camInput").click();
   });
   document.addEventListener("pointerdown",e=>{ if(!e.target.closest(".fab-wrap")) closeMenu(); });
-  $("mCam").onclick=()=>{ closeMenu(); pickFor="new"; $("camInput").click(); };
-  $("mPick").onclick=()=>{ closeMenu(); pickFor="new"; $("fileInput").click(); };
+  $("mCam").onclick=()=>{ closeMenu(); $("camInput").click(); };
+  $("mPick").onclick=()=>{ closeMenu(); $("fileInput").click(); };
   $("mManual").onclick=()=>{ closeMenu(); openEditor(null,null); };
   for (const id of ["camInput","fileInput"]){
     $(id).onchange=async e=>{
       const f=e.target.files&&e.target.files[0]; e.target.value=""; if(!f) return;
-      const target=pickFor; pickFor="new";
-      try {
-        const blob=await shrink(f);
-        if (target==="editor" && editing) setEditorPhoto(blob);
-        else openEditor(null, blob);
-      }
+      try { openEditor(null, await shrink(f)); }
       catch(err){ toast("この画像は読み込めません。JPEGかPNGの写真を選んでください。"); }
     };
   }
@@ -768,77 +773,13 @@ img{max-width:100%}
   document.addEventListener("keydown",e=>{ if(e.key==="Escape"){ if($("lightbox").classList.contains("open")) closeLightbox(); else if(stack.length) back(); } });
 
   $("exportBtn").onclick=()=>{
-    const head=["会社名","部署","肩書","氏名","ふりがな","電話","携帯","FAX","メール","住所","Webサイト","会った場所","共有メモ","自分だけのメモ","タグ","登録者","登録日"];
+    const head=["会社名","部署","肩書","氏名","ふりがな","電話","携帯","FAX","メール","住所","Webサイト","会った場所","メモ","タグ","登録日"];
     const q=v=>'"'+String(v==null?"":v).replace(/"/g,'""')+'"';
-    const rows=cards.map(c=>FIELDS.map(f=>q(c[f])).concat(q((c.tags||[]).join(" ")),q(c.created_by_name),q(longDate(c.created_at))).join(","));
+    const rows=cards.map(c=>FIELDS.map(f=>q(c[f])).concat(q((c.tags||[]).join(" ")),q(longDate(c.created_at))).join(","));
     const csv="\ufeff"+[head.map(q).join(",")].concat(rows).join("\r\n");
     const url=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));
     const a=el("a"); a.href=url; a.download="meishi.csv"; document.body.append(a); a.click(); a.remove();
     setTimeout(()=>URL.revokeObjectURL(url),1000);
-  };
-
-  // ---------- アカウント ----------
-  function showMe(){ if(!me) return; $("meName").textContent=me.name; $("meBtn").hidden=false; }
-  fetch("/api/me").then(r=>r.ok?r.json():null).then(u=>{ if(u){ me=u; showMe(); } }).catch(()=>{});
-  function accMsg(id,msg,err){ const m=$(id); m.textContent=msg||""; m.classList.toggle("err",!!err); }
-  $("meBtn").onclick=()=>{
-    if(!me) return;
-    $("accName").value=me.name;
-    $("pwCur").value=""; $("pwNew").value=""; accMsg("nameMsg",""); accMsg("pwMsg","");
-    $("membersWrap").hidden=!me.is_admin;
-    if (me.is_admin) loadMembers();
-    push($("account"));
-  };
-  $("saveName").onclick=async()=>{
-    try { me=await api("/api/me",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:$("accName").value})}); showMe(); try{localStorage.setItem("meishi.lastUser",me.name);}catch(e){} accMsg("nameMsg","保存しました。次からはこの名前でログインしてください。"); }
-    catch(e){ accMsg("nameMsg",e.message,true); }
-  };
-  $("savePw").onclick=async()=>{
-    try {
-      await api("/api/me/password",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({current:$("pwCur").value,next:$("pwNew").value})});
-      $("pwCur").value=""; $("pwNew").value="";
-      accMsg("pwMsg","変更しました。ほかの端末ではもう一度ログインが必要になります。");
-    } catch(e){ accMsg("pwMsg",e.message,true); }
-  };
-  async function loadMembers(){
-    const box=$("members"); box.textContent="";
-    let users=[];
-    try { users=await api("/api/users"); } catch(e){ box.append(el("div","acc-msg err",e.message)); return; }
-    for (const u of users){
-      const row=el("div","acc-row"), who=el("div","who"), b=el("b",null,u.name);
-      if (u.is_admin) b.append(el("span","badge admin","管理者"));
-      if (u.disabled) b.append(el("span","badge off","利用停止中"));
-      who.append(b, el("small",null,"登録した名刺 "+u.card_count+"枚"));
-      row.append(who);
-      if (u.id!==me.id){
-        const acts=el("div","acc-actions");
-        const toggle=el("button","mini"+(u.disabled?"":" warn"), u.disabled?"利用を再開":"利用停止");
-        toggle.onclick=()=>updateMember(u, {disabled:!u.disabled}, u.disabled ? u.name+" さんの利用を再開しますか？" : u.name+" さんを利用停止にしますか？\n（すぐにログアウトされ、ログインできなくなります。登録した名刺は残ります）");
-        const adm=el("button","mini", u.is_admin?"管理者を外す":"管理者にする");
-        adm.onclick=()=>updateMember(u, {is_admin:!u.is_admin}, u.is_admin ? u.name+" さんを管理者から外しますか？" : u.name+" さんを管理者にしますか？\n（メンバー管理ができるようになります）");
-        const pw=el("button","mini","パスワード再設定");
-        pw.onclick=async()=>{
-          const np=prompt(u.name+" さんの新しいパスワード（8文字以上）を入力してください。\n本人に伝えて、ログイン後に変更してもらってください。");
-          if (np==null) return;
-          try { await api("/api/users/"+u.id+"/password",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({password:np})}); toast("パスワードを再設定しました"); }
-          catch(e){ alert(e.message); }
-        };
-        acts.append(toggle, adm, pw); row.append(acts);
-      } else {
-        row.append(el("small",null,"あなた"));
-      }
-      box.append(row);
-    }
-  }
-  async function updateMember(u, change, question){
-    if (!confirm(question)) return;
-    try { await api("/api/users/"+u.id,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(change)}); loadMembers(); }
-    catch(e){ alert(e.message); }
-  }
-  $("logoutBtn").onclick=async()=>{
-    if (!confirm("ログアウトしますか？")) return;
-    try { await fetch("/api/logout",{method:"POST"}); } catch(e) {}
-    location.replace("/login.html");
   };
 
   history.replaceState({depth:0},"");
